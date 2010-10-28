@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<ehcache xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="ehcache.xsd" updateCheck="true"
+	monitoring="autodetect">
+
+	<defaultCache maxElementsInMemory="1000" eternal="false" timeToLiveSeconds="600" overflowToDisk="false"/>
+	<cache name="domain.SimpleValueObject" maxElementsInMemory="1000" eternal="false" timeToLiveSeconds="600" overflowToDisk="false"/>
+
+</ehcache>
