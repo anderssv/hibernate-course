@@ -38,16 +38,16 @@ public class HibernateTest {
 	public void shouldPersistBasicDomain() {
 		Long personId = 1L;
 		Country norway = createDefaultTestCountry();
-		Person johnny = createDefaultTestPerson(personId, norway);
-		
+		Person johnny = createDefaultTestPerson(personId, norway).build();
+
 		Session session = getSession();
 		session.save(norway);
 		session.save(johnny);
-		
+
 		HibernateUtil.flushAndClearCaches(session);
-		
+
 		Person savedPerson = (Person) session.get(Person.class, personId);
-		
+
 		assertNotNull(savedPerson);
 		assertEquals(johnny.getName(), savedPerson.getName());
 	}
@@ -56,27 +56,37 @@ public class HibernateTest {
 	public void shouldPersistDomainWithRelations() {
 		Long personId = 1L;
 		Long companyId = 1L;
+
 		Country norway = createDefaultTestCountry();
-		Company nydra = new Company(companyId, "Nydra International", norway);
-		Person johnny = createDefaultTestPerson(personId, norway);
-		
-		johnny.addJob("Chief engineer", nydra);
-		
+		Company nydra = createDefaultCompany(companyId, norway).build();
+		Person.Builder andersBuilder = createDefaultTestPerson(personId, norway)
+				.name("Anders Andersson");
+		Person anders = andersBuilder.build();
+
+		anders.addJob("Chief engineer", nydra);
+
 		Session session = getSession();
 		session.save(norway);
 		session.save(nydra);
-		session.save(johnny);
-		
+		session.save(anders);
+
 		HibernateUtil.flushAndClearCaches(session);
-		
+
 		Person savedPerson = (Person) session.get(Person.class, personId);
-		
+
 		assertNotNull(savedPerson);
 		assertTrue(savedPerson.hasAJob());
 	}
 
-	private Person createDefaultTestPerson(Long personId, Country countryOfResidence) {
-		return new Person(personId, "Johnny Nilsson", countryOfResidence);
+	private Company.Builder createDefaultCompany(Long companyId, Country country) {
+		return new Company.Builder().id(companyId).name("Nydra International")
+				.countryOfHeadquarters(country);
+	}
+
+	private Person.Builder createDefaultTestPerson(Long personId,
+			Country countryOfResidence) {
+		return new Person.Builder().id(personId).name("Johnny Olsen")
+				.countryOfResidence(countryOfResidence);
 	}
 
 	private Country createDefaultTestCountry() {

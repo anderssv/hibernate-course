@@ -15,6 +15,7 @@ public class Person {
 
 	@Id
 	private Long id;
+	
 	private String name;
 	
 	@ManyToOne
@@ -45,6 +46,29 @@ public class Person {
 
 	public boolean hasAJob() {
 		return !this.jobs.isEmpty();
+	}
+	
+	public static class Builder {
+		private Person person = new Person();
+		
+		public Builder name(String name) {
+			person.name = name;
+			return this;
+		}
+		
+		public Builder countryOfResidence(Country country) {
+			person.countryOfResidence = country;
+			return this;
+		}
+		
+		public Person build() {
+			return person;
+		}
+
+		public Builder id(Long personId) {
+			person.id = personId;
+			return this;
+		}
 	}
 
 }
