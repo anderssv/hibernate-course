@@ -74,7 +74,7 @@ public class HibernateTest {
 		Country norway = createDefaultTestCountry();
 		Company nydra = createDefaultCompany(companyId, norway).build();
 		Person.Builder andersBuilder = createDefaultTestPerson(personId, norway)
-				.name("Anders Andersson");
+				.name("Leif Andersson");
 		Person anders = andersBuilder.build();
 
 		anders.addJob("Chief engineer", nydra);
@@ -135,6 +135,28 @@ public class HibernateTest {
 		for (Person person : unemployedPersons) {
 			assertTrue(!person.hasAJob());
 		}
+	}
+
+	@Test
+	public void shouldDeleteFromDatabase() {
+		Long personId = 1L;
+		Country norway = createDefaultTestCountry();
+		Person person = createDefaultTestPerson(personId, norway).build();
+
+		Session session = getSession();
+		session.save(norway);
+		session.save(person);
+		session.flush();
+
+		assertNumberOfObjectsInDatabase(1, "Person");
+
+		session.delete(person);
+
+		Criteria criteria = session.createCriteria(Person.class);
+		criteria.add(Restrictions.like("name", "%Olsen"));
+		criteria.list();
+		
+		assertNumberOfObjectsInDatabase(0, "Person");
 	}
 
 	private void generatePersonsInTheDatabaseWithJobs(Session session,
