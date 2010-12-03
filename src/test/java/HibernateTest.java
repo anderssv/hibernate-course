@@ -136,6 +136,30 @@ public class HibernateTest {
 			assertTrue(!person.hasAJob());
 		}
 	}
+	
+	@Test
+	public void shouldUpdateDomain() {
+		Long personId = 1L;
+		Country norway = createDefaultTestCountry();
+		Person testPerson = createDefaultTestPerson(personId, norway).build();
+
+		Session session = getSession();
+		session.save(norway);
+		session.save(testPerson);
+		
+		session.flush();
+		
+		testPerson = (Person) session.get(Person.class, 1L);
+		testPerson.changeName("KalleKlovn");
+
+		session.flush();
+		
+		Criteria c = session.createCriteria(Person.class);
+		c.add(Restrictions.eq("id", 1L));
+		testPerson = (Person) c.list().get(0);
+		
+		assertEquals(testPerson.getName(), "KalleKlovn");
+	}
 
 	private void generatePersonsInTheDatabaseWithJobs(Session session,
 			int start, int number, Country country) {
