@@ -5,11 +5,15 @@ import static org.junit.Assert.assertTrue;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 
 import javax.sql.DataSource;
 
+import org.hibernate.Criteria;
 import org.hibernate.SessionFactory;
 import org.hibernate.classic.Session;
+import org.hibernate.criterion.Projections;
+import org.hibernate.criterion.Restrictions;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -104,9 +108,61 @@ public class HibernateTest {
 		assertNumberOfObjectsInDatabase(1, "Person");
 		deleteAllRowsFromTable("Person");
 		assertNumberOfObjectsInDatabase(0, "Person");
-		
+
 		Person fetchedPerson = (Person) session.get(Person.class, personId);
 		assertNotNull(fetchedPerson);
+	}
+
+	@Test
+	public void shouldFetchOnlyPersonsWithoutAJob() {
+		Session session = getSession();
+
+		Country norway = createDefaultTestCountry();
+		generatePersonsInTheDatabaseWithJobs(session, 0, 20, norway);
+		generatePersonsInTheDatabaseWithoutJobs(session, 20, 20, norway);
+
+		session.flush();
+
+		Criteria countCriteria = session.createCriteria(Person.class);
+		countCriteria.setProjection(Projections.count("id"));
+		assertEquals(40, countCriteria.uniqueResult());
+
+		// Fetch only the persons with no jobs
+		Criteria unemployedCriteria = session.createCriteria(Person.class);
+		unemployedCriteria.add(Restrictions.isEmpty("jobs"));
+
+		List<Person> unemployedPersons = unemployedCriteria.list();
+		for (Person person : unemployedPersons) {
+			assertTrue(!person.hasAJob());
+		}
+	}
+
+	private void generatePersonsInTheDatabaseWithJobs(Session session,
+			int start, int number, Country country) {
+		Company nydra = createDefaultCompany(1L, country).build();
+
+		generatePersonInTheDatabase(session, start, number, nydra, country);
+	}
+
+	private void generatePersonInTheDatabase(Session session, int start,
+			int number, Company company, Country country) {
+		session.save(country);
+		if (company != null) {
+			session.save(company);
+		}
+
+		for (Long i = new Long(start); i < start + number; i++) {
+			Person person = createDefaultTestPerson(i, country).build();
+			if (company != null) {
+				person.addJob("Engineer", company);
+			}
+			session.save(person);
+		}
+	}
+
+	private void generatePersonsInTheDatabaseWithoutJobs(Session session,
+			int start, int number, Country country) {
+		generatePersonInTheDatabase(session, start, number, null, country);
 	}
 
 	private Company.Builder createDefaultCompany(Long companyId, Country country) {
@@ -159,9 +215,10 @@ public class HibernateTest {
 		});
 		return count;
 	}
-	
+
 	private void deleteAllRowsFromTable(String... tablenames) {
-		SimpleJdbcTestUtils.deleteFromTables(new SimpleJdbcTemplate(dataSource), tablenames);
+		SimpleJdbcTestUtils.deleteFromTables(
+				new SimpleJdbcTemplate(dataSource), tablenames);
 	}
 
 }
