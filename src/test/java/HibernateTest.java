@@ -94,26 +94,6 @@ public class HibernateTest {
 	}
 
 	@Test
-	public void shouldUseFirstLevelCacheForFetchingAnObject() {
-		Long personId = 1L;
-		Country norway = createDefaultTestCountry();
-		Person testPerson = createDefaultTestPerson(personId, norway).build();
-
-		Session session = getSession();
-		session.save(norway);
-		session.save(testPerson);
-
-		session.flush();
-
-		assertNumberOfObjectsInDatabase(1, "Person");
-		deleteAllRowsFromTable("Person");
-		assertNumberOfObjectsInDatabase(0, "Person");
-
-		Person fetchedPerson = (Person) session.get(Person.class, personId);
-		assertNotNull(fetchedPerson);
-	}
-
-	@Test
 	public void shouldFetchOnlyPersonsWithoutAJob() {
 		Session session = getSession();
 
@@ -123,11 +103,12 @@ public class HibernateTest {
 
 		session.flush();
 
+		// TODO Count number of persons in DB with criteria
 		Criteria countCriteria = session.createCriteria(Person.class);
 		countCriteria.setProjection(Projections.count("id"));
 		assertEquals(40, countCriteria.uniqueResult());
 
-		// Fetch only the persons with no jobs
+		// TODO Fetch only the persons with no jobs
 		Criteria unemployedCriteria = session.createCriteria(Person.class);
 		unemployedCriteria.add(Restrictions.isEmpty("jobs"));
 
@@ -149,16 +130,15 @@ public class HibernateTest {
 		
 		session.flush();
 		
+		// TODO Change name of person
 		testPerson = (Person) session.get(Person.class, 1L);
 		testPerson.changeName("KalleKlovn");
 
 		session.flush();
 		
-		Criteria c = session.createCriteria(Person.class);
-		c.add(Restrictions.eq("id", 1L));
-		testPerson = (Person) c.list().get(0);
-		
-		assertEquals(testPerson.getName(), "KalleKlovn");
+		session.clear();
+		Person dbPerson = (Person) session.get(Person.class, personId);
+		assertEquals(dbPerson.getName(), "KalleKlovn");
 	}
 
 	@Test
@@ -174,6 +154,7 @@ public class HibernateTest {
 
 		assertNumberOfObjectsInDatabase(1, "Person");
 
+		// TODO Delete person with Hibernate
 		session.delete(person);
 
 		Criteria criteria = session.createCriteria(Person.class);
@@ -181,6 +162,26 @@ public class HibernateTest {
 		criteria.list();
 		
 		assertNumberOfObjectsInDatabase(0, "Person");
+	}
+
+	@Test
+	public void shouldUseFirstLevelCacheForFetchingAnObject() {
+		Long personId = 1L;
+		Country norway = createDefaultTestCountry();
+		Person testPerson = createDefaultTestPerson(personId, norway).build();
+
+		Session session = getSession();
+		session.save(norway);
+		session.save(testPerson);
+
+		session.flush();
+
+		assertNumberOfObjectsInDatabase(1, "Person");
+		deleteAllRowsFromTable("Person");
+		assertNumberOfObjectsInDatabase(0, "Person");
+
+		Person fetchedPerson = (Person) session.get(Person.class, personId);
+		assertNotNull(fetchedPerson);
 	}
 
 	private void generatePersonsInTheDatabaseWithJobs(Session session,
