@@ -117,7 +117,7 @@ public class HibernateTest {
 			assertTrue(!person.hasAJob());
 		}
 	}
-	
+
 	@Test
 	public void shouldUpdateDomain() {
 		Long personId = 1L;
@@ -127,15 +127,15 @@ public class HibernateTest {
 		Session session = getSession();
 		session.save(norway);
 		session.save(testPerson);
-		
+
 		session.flush();
-		
+
 		// TODO Change name of person
 		testPerson = (Person) session.get(Person.class, 1L);
 		testPerson.changeName("KalleKlovn");
 
 		session.flush();
-		
+
 		session.clear();
 		Person dbPerson = (Person) session.get(Person.class, personId);
 		assertEquals(dbPerson.getName(), "KalleKlovn");
@@ -160,7 +160,7 @@ public class HibernateTest {
 		Criteria criteria = session.createCriteria(Person.class);
 		criteria.add(Restrictions.like("name", "%Olsen"));
 		criteria.list();
-		
+
 		assertNumberOfObjectsInDatabase(0, "Person");
 	}
 
