@@ -40,6 +40,10 @@ public class Person {
 		return this.name;
 	}
 
+	public void changeName(String name) {
+		this.name = name;
+	}
+	
 	public void addJob(String title, Company company) {
 		this.jobs.add(new Job(this, title, company));
 	}
