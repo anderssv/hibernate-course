@@ -33,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 import domain.Company;
 import domain.Country;
 import domain.Person;
+import domain.SocialSecurityNumber;
 
 /**
  * This test is run with Spring. Spring makes sure we have a HSQL DB to play
@@ -76,9 +77,10 @@ public class HibernateTest {
 
 		Country norway = createDefaultTestCountry();
 		Company nydra = createDefaultCompany(companyId, norway).build();
-		Person.Builder andersBuilder = createDefaultTestPerson(personId, norway)
-				.name("Leif Andersson");
-		Person anders = andersBuilder.build();
+		Person.Builder leifBuilder = createDefaultTestPerson(personId, norway)
+				.name("Leif Andersson").socialSecurityNumber(
+						new SocialSecurityNumber("10987654321"));
+		Person anders = leifBuilder.build();
 
 		anders.addJob("Chief engineer", nydra);
 
@@ -223,7 +225,8 @@ public class HibernateTest {
 
 	private Person.Builder createDefaultTestPerson(Long personId,
 			Country countryOfResidence) {
-		return new Person.Builder().id(personId).name("Johnny Olsen")
+		return new Person.Builder().id(personId).socialSecurityNumber(
+				new SocialSecurityNumber("12345678901")).name("Johnny Olsen")
 				.countryOfResidence(countryOfResidence);
 	}
 
