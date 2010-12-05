@@ -14,7 +14,6 @@ public class Company {
 	@ManyToOne
 	private Country countryOfHeadquarters;
 
-	@SuppressWarnings("unused")
 	private Company() {
 		
 	}

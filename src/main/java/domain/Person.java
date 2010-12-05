@@ -25,7 +25,6 @@ public class Person {
 	private Set<Job> jobs = new HashSet<Job>();
 
 	// Hibernate constructor
-	@SuppressWarnings("unused")
 	private Person() {
 
 	}

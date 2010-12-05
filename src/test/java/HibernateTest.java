@@ -1,7 +1,9 @@
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -19,6 +21,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.StatementCallback;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
@@ -91,6 +94,7 @@ public class HibernateTest {
 
 		assertNotNull(savedPerson);
 		assertTrue(savedPerson.hasAJob());
+		assertFalse(tableExists("PERSON_JOB"));
 	}
 
 	@Test
@@ -114,7 +118,7 @@ public class HibernateTest {
 
 		List<Person> unemployedPersons = unemployedCriteria.list();
 		for (Person person : unemployedPersons) {
-			assertTrue(!person.hasAJob());
+			assertFalse(person.hasAJob());
 		}
 	}
 
@@ -261,6 +265,23 @@ public class HibernateTest {
 			}
 		});
 		return count;
+	}
+
+	public boolean tableExists(final String tablename) {
+		JdbcTemplate template = new JdbcTemplate(dataSource);
+		return template.execute(new ConnectionCallback<Boolean>() {
+			@Override
+			public Boolean doInConnection(Connection con) throws SQLException,
+					DataAccessException {
+				ResultSet tableRs = con.getMetaData().getTables(null, null,
+						tablename, null);
+				if (tableRs.next()) {
+					return true;
+				}
+
+				return false;
+			}
+		});
 	}
 
 	private void deleteAllRowsFromTable(String... tablenames) {
