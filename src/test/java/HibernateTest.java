@@ -10,7 +10,6 @@ import java.sql.Statement;
 import java.util.List;
 import java.util.Map;
 
-import javax.persistence.OptimisticLockException;
 import javax.sql.DataSource;
 
 import org.hibernate.Criteria;
@@ -397,5 +396,4 @@ public class HibernateTest {
 
 		sessionFactory.evictQueries();
 	}
-
 }
