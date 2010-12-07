@@ -22,6 +22,7 @@ import org.hibernate.metadata.ClassMetadata;
 import org.hibernate.metadata.CollectionMetadata;
 import org.hibernate.stat.SecondLevelCacheStatistics;
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,6 +78,7 @@ public class HibernateTest {
 	}
 
 	@Test
+	@Ignore
 	public void shouldPersistDomainWithRelations() {
 		Long personId = 1L;
 		Long companyId = 1L;
@@ -106,6 +108,7 @@ public class HibernateTest {
 	}
 
 	@Test
+	@Ignore
 	public void shouldFetchOnlyPersonsWithoutAJob() {
 		Session session = getSession();
 
@@ -116,13 +119,12 @@ public class HibernateTest {
 		session.flush();
 
 		// TODO Count number of persons in DB with criteria
-		Criteria countCriteria = session.createCriteria(Person.class);
-		countCriteria.setProjection(Projections.count("id"));
+		Criteria countCriteria = null;
+		
 		assertEquals(40, countCriteria.uniqueResult());
 
 		// TODO Fetch only the persons with no jobs
-		Criteria unemployedCriteria = session.createCriteria(Person.class);
-		unemployedCriteria.add(Restrictions.isEmpty("jobs"));
+		Criteria unemployedCriteria = null;
 
 		List<Person> unemployedPersons = unemployedCriteria.list();
 		for (Person person : unemployedPersons) {
@@ -131,6 +133,7 @@ public class HibernateTest {
 	}
 
 	@Test
+	@Ignore
 	public void shouldUpdateDomain() {
 		Long personId = 1L;
 		Country norway = createDefaultTestCountry();
@@ -143,10 +146,6 @@ public class HibernateTest {
 		session.flush();
 
 		// TODO Change name of person
-		testPerson = (Person) session.get(Person.class, 1L);
-		testPerson.changeName("KalleKlovn");
-
-		session.flush();
 
 		session.clear();
 		Person dbPerson = (Person) session.get(Person.class, personId);
@@ -154,6 +153,7 @@ public class HibernateTest {
 	}
 
 	@Test
+	@Ignore
 	public void shouldDeleteFromDatabase() {
 		Long personId = 1L;
 		Country norway = createDefaultTestCountry();
@@ -167,16 +167,15 @@ public class HibernateTest {
 		assertNumberOfObjectsInDatabase(1, "Person");
 
 		// TODO Delete person with Hibernate
-		session.delete(person);
 
 		Criteria criteria = session.createCriteria(Person.class);
 		criteria.add(Restrictions.like("name", "%Olsen"));
-		criteria.list();
 
 		assertNumberOfObjectsInDatabase(0, "Person");
 	}
 
 	@Test
+	@Ignore
 	public void shouldUseFirstLevelCacheForFetchingAnObject() {
 		Long personId = 1L;
 		Country norway = createDefaultTestCountry();
@@ -192,11 +191,14 @@ public class HibernateTest {
 		deleteAllRowsFromTable("Person");
 		assertNumberOfObjectsInDatabase(0, "Person");
 
+		// TODO Why doesn't this work?
+		session.clear();
 		Person fetchedPerson = (Person) session.get(Person.class, personId);
 		assertNotNull(fetchedPerson);
 	}
 	
 	@Test
+	@Ignore
 	public void shouldUseOptimisticLocking() {
 		Long personId = 1L;
 		Country norway = createDefaultTestCountry();
@@ -224,6 +226,7 @@ public class HibernateTest {
 	}
 
 	@Test
+	@Ignore
 	public void shouldHitSecondLevelCache() {
 		Session session = sessionFactory.getCurrentSession();
 
@@ -245,8 +248,6 @@ public class HibernateTest {
 
 		// TODO Fetch person and navigate domain so Country is loaded into cache
 		// with one miss.
-		Person fetchedPerson = (Person) session.get(Person.class, personId);
-		assertNotNull(fetchedPerson.getCountryOfResidence().getCode());
 
 		assertEquals(1, countryCacheStats.getElementCountInMemory());
 		assertEquals(0, countryCacheStats.getHitCount());
@@ -257,8 +258,6 @@ public class HibernateTest {
 		session.clear();
 
 		// TODO Trigger another fetch
-		fetchedPerson = (Person) session.get(Person.class, personId);
-		assertNotNull(fetchedPerson.getCountryOfResidence().getCode());
 		assertEquals(1, countryCacheStats.getHitCount());
 	}
 

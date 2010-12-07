@@ -3,37 +3,20 @@ package domain;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Embedded;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.Version;
-
-@Entity
 public class Person {
 
-	@Id
 	private Long id;
 
-	@Embedded
 	private SocialSecurityNumber ssn;
 
 	private String name;
 
-	@ManyToOne(fetch = FetchType.LAZY)
 	private Country countryOfResidence;
 
-	@OneToMany(cascade = CascadeType.ALL, mappedBy = "person")
 	private Set<Job> jobs = new HashSet<Job>();
 
-	@Version
-	@Column(name="VERSION")
 	private Integer version;
-	
+
 	// Hibernate constructor
 	private Person() {
 
@@ -54,7 +37,7 @@ public class Person {
 	public Integer getVersion() {
 		return this.version;
 	}
-	
+
 	public Country getCountryOfResidence() {
 		return this.countryOfResidence;
 	}
