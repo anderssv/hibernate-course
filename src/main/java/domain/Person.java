@@ -4,11 +4,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.Version;
 
 @Entity
 public class Person {
@@ -27,6 +29,10 @@ public class Person {
 	@OneToMany(cascade = CascadeType.ALL, mappedBy = "person")
 	private Set<Job> jobs = new HashSet<Job>();
 
+	@Version
+	@Column(name="VERSION")
+	private Integer version;
+	
 	// Hibernate constructor
 	private Person() {
 
@@ -37,12 +43,17 @@ public class Person {
 		this.id = id;
 		this.name = name;
 		this.countryOfResidence = countryOfResidence;
+		this.version = 1;
 	}
 
 	public String getName() {
 		return this.name;
 	}
 
+	public Integer getVersion() {
+		return this.version;
+	}
+	
 	public void changeName(String name) {
 		this.name = name;
 	}
@@ -61,6 +72,7 @@ public class Person {
 		private Country countryOfResidence;
 		private Long id;
 		private SocialSecurityNumber ssn;
+		private Long version;
 
 		public Builder name(String name) {
 			this.name = name;

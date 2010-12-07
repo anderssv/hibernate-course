@@ -9,10 +9,12 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 
+import javax.persistence.OptimisticLockException;
 import javax.sql.DataSource;
 
 import org.hibernate.Criteria;
 import org.hibernate.SessionFactory;
+import org.hibernate.StaleObjectStateException;
 import org.hibernate.classic.Session;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
@@ -25,6 +27,7 @@ import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.StatementCallback;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
+import org.springframework.test.AssertThrows;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.jdbc.SimpleJdbcTestUtils;
@@ -189,6 +192,44 @@ public class HibernateTest {
 		Person fetchedPerson = (Person) session.get(Person.class, personId);
 		assertNotNull(fetchedPerson);
 	}
+	
+	@Test
+	public void shouldUseOptimisticLocking() {
+		new AssertThrows(StaleObjectStateException.class) {
+			
+			@Override
+			public void test() throws Exception {
+				Long personId = 1L;
+				Country norway = createDefaultTestCountry();
+				Person testPerson = createDefaultTestPerson(personId, norway).build();
+
+				Session session = getSession();
+				session.save(norway);
+				session.save(testPerson);
+				
+				session.flush();
+
+				testPerson = (Person) session.get(Person.class, personId);
+				
+				final Integer verson = new Integer(testPerson.getVersion()+1);
+				JdbcTemplate template = new JdbcTemplate(dataSource);
+				Integer count = template.execute(new StatementCallback<Integer>() {
+					@Override
+					public Integer doInStatement(Statement stmt) throws SQLException,
+							DataAccessException {
+						ResultSet rs = stmt.executeQuery("UPDATE PERSON SET VERSION = 2 WHERE ID = 1");
+						return 1;
+					}
+				});
+				
+				testPerson.changeName("SkalGiException");
+				session.update(testPerson);
+				session.flush();
+				
+			}
+		}.runTest();
+		getSession().clear();
+	}
 
 	private void generatePersonsInTheDatabaseWithJobs(Session session,
 			int start, int number, Country country) {
@@ -255,6 +296,11 @@ public class HibernateTest {
 		assertEquals((Integer) i, count);
 	}
 
+	private void incrementVersion(final Long id, final String table, final Integer newVersion) {
+		
+		
+	}
+	
 	private Integer countEntriesInDatabase(JdbcTemplate template,
 			final String tableName) {
 		Integer count = template.execute(new StatementCallback<Integer>() {
