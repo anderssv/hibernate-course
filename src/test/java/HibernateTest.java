@@ -198,37 +198,26 @@ public class HibernateTest {
 	
 	@Test
 	public void shouldUseOptimisticLocking() {
+		Long personId = 1L;
+		Country norway = createDefaultTestCountry();
+		Person testPerson = createDefaultTestPerson(personId, norway).build();
+
+		Session session = getSession();
+		session.save(norway);
+		session.save(testPerson);
+		
+		session.flush();
+
+		final Person person = (Person) session.get(Person.class, personId);
+		
+		this.incrementVersion();
+		
+		testPerson.changeName("SkalGiException");
 		new AssertThrows(StaleObjectStateException.class) {
-			
 			@Override
 			public void test() throws Exception {
-				Long personId = 1L;
-				Country norway = createDefaultTestCountry();
-				Person testPerson = createDefaultTestPerson(personId, norway).build();
-
-				Session session = getSession();
-				session.save(norway);
-				session.save(testPerson);
-				
-				session.flush();
-
-				testPerson = (Person) session.get(Person.class, personId);
-				
-				final Integer verson = new Integer(testPerson.getVersion()+1);
-				JdbcTemplate template = new JdbcTemplate(dataSource);
-				Integer count = template.execute(new StatementCallback<Integer>() {
-					@Override
-					public Integer doInStatement(Statement stmt) throws SQLException,
-							DataAccessException {
-						ResultSet rs = stmt.executeQuery("UPDATE PERSON SET VERSION = 2 WHERE ID = 1");
-						return 1;
-					}
-				});
-				
-				testPerson.changeName("SkalGiException");
-				session.update(testPerson);
-				session.flush();
-				
+				getSession().update(person);
+				getSession().flush();
 			}
 		}.runTest();
 		getSession().clear();
@@ -338,8 +327,17 @@ public class HibernateTest {
 		assertEquals((Integer) i, count);
 	}
 
-	private void incrementVersion(final Long id, final String table, final Integer newVersion) {
-		
+	private void incrementVersion() {
+		JdbcTemplate template = new JdbcTemplate(dataSource);
+		Integer count = template.execute(new StatementCallback<Integer>() {
+			@Override
+			public Integer doInStatement(Statement stmt) throws SQLException,
+					DataAccessException {
+				ResultSet rs = stmt.executeQuery("UPDATE PERSON SET VERSION = 2 WHERE ID = 1");
+				return 1;
+			}
+		});
+
 		
 	}
 	
