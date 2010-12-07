@@ -3,7 +3,11 @@ package domain;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
 @Entity
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class Country {
 
 	@Id
@@ -11,14 +15,17 @@ public class Country {
 	private String displayName;
 
 	// Hibernate requires
-	@SuppressWarnings("unused")
-	private Country() {
+	protected Country() {
 
 	}
 
 	public Country(String code, String displayName) {
 		this.code = code;
 		this.displayName = displayName;
+	}
+
+	public String getCode() {
+		return code;
 	}
 
 }

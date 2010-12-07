@@ -6,6 +6,7 @@ import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
@@ -21,7 +22,7 @@ public class Person {
 
 	private String name;
 
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	private Country countryOfResidence;
 
 	@OneToMany(cascade = CascadeType.ALL, mappedBy = "person")
@@ -41,6 +42,10 @@ public class Person {
 
 	public String getName() {
 		return this.name;
+	}
+
+	public Country getCountryOfResidence() {
+		return this.countryOfResidence;
 	}
 
 	public void changeName(String name) {
@@ -87,5 +92,4 @@ public class Person {
 			return this;
 		}
 	}
-
 }
