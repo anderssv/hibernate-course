@@ -8,6 +8,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
+import java.util.Map;
 
 import javax.persistence.OptimisticLockException;
 import javax.sql.DataSource;
@@ -18,6 +19,9 @@ import org.hibernate.StaleObjectStateException;
 import org.hibernate.classic.Session;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
+import org.hibernate.metadata.ClassMetadata;
+import org.hibernate.metadata.CollectionMetadata;
+import org.hibernate.stat.SecondLevelCacheStatistics;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -231,6 +235,45 @@ public class HibernateTest {
 		getSession().clear();
 	}
 
+	@Test
+	public void shouldHitSecondLevelCache() {
+		Session session = sessionFactory.getCurrentSession();
+
+		Long personId = 1L;
+		Country norway = createDefaultTestCountry();
+		Person person = createDefaultTestPerson(personId, norway).build();
+
+		session.save(norway);
+		session.save(person);
+
+		session.flush();
+		session.clear();
+		evictSecondLevelCache();
+
+		SecondLevelCacheStatistics countryCacheStats = sessionFactory
+				.getStatistics().getSecondLevelCacheStatistics(
+						Country.class.getCanonicalName());
+		assertEquals(0, countryCacheStats.getElementCountInMemory());
+
+		// TODO Fetch person and navigate domain so Country is loaded into cache
+		// with one miss.
+		Person fetchedPerson = (Person) session.get(Person.class, personId);
+		assertNotNull(fetchedPerson.getCountryOfResidence().getCode());
+
+		assertEquals(1, countryCacheStats.getElementCountInMemory());
+		assertEquals(0, countryCacheStats.getHitCount());
+		assertEquals(1, countryCacheStats.getMissCount());
+
+		// Clear out session (1st level cache) to make sure it is fetched from
+		// second level
+		session.clear();
+
+		// TODO Trigger another fetch
+		fetchedPerson = (Person) session.get(Person.class, personId);
+		assertNotNull(fetchedPerson.getCountryOfResidence().getCode());
+		assertEquals(1, countryCacheStats.getHitCount());
+	}
+
 	private void generatePersonsInTheDatabaseWithJobs(Session session,
 			int start, int number, Country country) {
 		Company nydra = createDefaultCompany(1L, country).build();
@@ -336,6 +379,23 @@ public class HibernateTest {
 	private void deleteAllRowsFromTable(String... tablenames) {
 		SimpleJdbcTestUtils.deleteFromTables(
 				new SimpleJdbcTemplate(dataSource), tablenames);
+	}
+
+	@SuppressWarnings("unchecked")
+	private void evictSecondLevelCache() {
+		Map<String, CollectionMetadata> roleMap = sessionFactory
+				.getAllCollectionMetadata();
+		for (String roleName : roleMap.keySet()) {
+			sessionFactory.evictCollection(roleName);
+		}
+
+		Map<String, ClassMetadata> entityMap = sessionFactory
+				.getAllClassMetadata();
+		for (String entityName : entityMap.keySet()) {
+			sessionFactory.evictEntity(entityName);
+		}
+
+		sessionFactory.evictQueries();
 	}
 
 }
